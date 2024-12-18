@@ -4,11 +4,11 @@ import wandb
 class WandbLogger:
     
     def __init__(
-            self, 
-            exp, 
-            project='SemanticCalibration', 
-            entity='vbutoi'
-            ):
+        self, 
+        exp, 
+        project='SemanticCalibration', 
+        entity='vbutoi'
+    ):
 
         self.exp = exp
         exp_config = exp.config.to_dict() 

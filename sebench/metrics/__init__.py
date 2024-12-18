@@ -1,4 +1,3 @@
-from .calibration import * 
 from .segmentation import (
     hd95,
     dice_score,

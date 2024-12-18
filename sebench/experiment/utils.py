@@ -110,7 +110,7 @@ def load_experiment(
             props = json.loads(prop_file.read())
         exp_class = props["experiment"]["class"]
     # Load the class
-    exp_class = absolute_import(f'ese.experiment.{exp_class}')
+    exp_class = absolute_import(f'sebench.experiment.{exp_class}')
     exp_obj = exp_class(
         exp_path, 
         init_metrics=False, 
@@ -484,8 +484,8 @@ def get_training_configs(
     exp_cfg: dict,
     base_cfg: Config,
     add_date: bool = True,
-    scratch_root: Path = Path("/storage/vbutoi/scratch/ESE"),
-    train_cfg_root: Path = Path("/storage/vbutoi/projects/ESE/ese/configs/training"),
+    scratch_root: Path = Path("/storage/vbutoi/scratch/SeBench"),
+    train_cfg_root: Path = Path("/storage/vbutoi/projects/SeBench/sebench/configs/training"),
 ): 
     # We need to flatten the experiment config to get the different options.
     # Building new yamls under the exp_name name for model type.
@@ -531,8 +531,8 @@ def get_calibration_configs(
     base_cfg: Config,
     calibration_model_cfgs: dict,
     add_date: bool = True,
-    code_root: Path = Path("/storage/vbutoi/projects/ESE"),
-    scratch_root: Path = Path("/storage/vbutoi/scratch/ESE")
+    code_root: Path = Path("/storage/vbutoi/projects/SeBench"),
+    scratch_root: Path = Path("/storage/vbutoi/scratch/SeBench")
 ): 
     # We need to flatten the experiment config to get the different options.
     # Building new yamls under the exp_name name for model type.
@@ -542,7 +542,7 @@ def get_calibration_configs(
     flat_exp_cfg_dict = flatten_cfg2dict(exp_cfg)
     flat_exp_cfg_dict = listify_dict(flat_exp_cfg_dict) # Make it compatible to our product function.
 
-    cfg_root = code_root / "ese" / "configs" 
+    cfg_root = code_root / "sebench" / "configs" 
 
     # We need to make sure that these are models and not model folders.
     all_pre_models = []
@@ -608,8 +608,8 @@ def get_inference_configs(
     base_cfg: Config,
     add_date: bool = True,
     use_best_models: bool = False,
-    code_root: Path = Path("/storage/vbutoi/projects/ESE"),
-    scratch_root: Path = Path("/storage/vbutoi/scratch/ESE")
+    code_root: Path = Path("/storage/vbutoi/projects/SeBench"),
+    scratch_root: Path = Path("/storage/vbutoi/scratch/SeBench")
 ):
     # We need to flatten the experiment config to get the different options.
     # Building new yamls under the exp_name name for model type.
@@ -636,7 +636,7 @@ def get_inference_configs(
         eval_dataset = group_str.split('_')[3] # Group format is like MM_DD_YY_Dataset
     if eval_dataset in ['OCTA', 'ISLES', "WMH"] and use_best_models:
         # Load the default best models, and update the exp config with those as the base models.
-        with open(code_root / "ese" / "configs" / "defaults" / "Best_Models.yaml", 'r') as file:
+        with open(code_root / "sebench" / "configs" / "defaults" / "Best_Models.yaml", 'r') as file:
             best_models_cfg = yaml.safe_load(file)
         # Update the exp_cfg with the best models.
         exp_cfg['base_model'] = best_models_cfg[eval_dataset]
@@ -661,7 +661,7 @@ def get_inference_configs(
 
     # Load the inference cfg from local.
     ##################################################
-    default_cfg_root = code_root / "ese" / "configs" / "defaults"
+    default_cfg_root = code_root / "sebench" / "configs" / "defaults"
     ##################################################
     with open(default_cfg_root / "Calibration_Metrics.yaml", 'r') as file:
         cal_metrics_cfg = yaml.safe_load(file)
@@ -751,8 +751,8 @@ def get_restart_configs(
     exp_cfg: dict,
     base_cfg: Config,
     add_date: bool = True,
-    scratch_root: Path = Path("/storage/vbutoi/scratch/ESE"),
-    train_cfg_root: Path = Path("/storage/vbutoi/projects/ESE/ese/configs/training"),
+    scratch_root: Path = Path("/storage/vbutoi/scratch/SeBench"),
+    train_cfg_root: Path = Path("/storage/vbutoi/projects/SeBench/sebench/configs/training"),
 ): 
     # We need to flatten the experiment config to get the different options.
     # Building new yamls under the exp_name name for model type.
@@ -952,7 +952,7 @@ def add_dset_presets(
     code_root
 ):
     # Add the dataset specific details.
-    dataset_cfg_file = code_root / "ese" / "configs" / mode / f"{inf_dset_name}.yaml"
+    dataset_cfg_file = code_root / "sebench" / "configs" / mode / f"{inf_dset_name}.yaml"
     if dataset_cfg_file.exists():
         with open(dataset_cfg_file, 'r') as d_file:
             dataset_cfg = yaml.safe_load(d_file)
@@ -997,7 +997,7 @@ def get_inference_dset_info(
 
     inf_dset_name = inf_dset_cls.split('.')[-1]
     # Add the dataset specific details.
-    inf_dset_cfg_file = code_root / "ese" / "configs" / "inference" / f"{inf_dset_name}.yaml"
+    inf_dset_cfg_file = code_root / "sebench" / "configs" / "inference" / f"{inf_dset_name}.yaml"
     if inf_dset_cfg_file.exists():
         with open(inf_dset_cfg_file, 'r') as d_file:
             inf_cfg_presets = yaml.safe_load(d_file)

@@ -4,18 +4,11 @@ import torch
 import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib.colors as mcolors
-# Local imports
-from ..metrics.utils import (
-    get_bin_per_sample, 
-)
-from ..metrics.local_ps import bin_stats
-from ..analysis.cal_plots.reliability_plots import reliability_diagram
 
 
 def ShowPredictionsCallback(
     batch, 
     threshold: float = 0.5,
-    num_prob_bins: int = 15,
     size_per_image: int = 5
 ):
     # If our pred has a different batchsize than our inputs, we
@@ -79,14 +72,6 @@ def ShowPredictionsCallback(
             y_hat = torch.sigmoid(y_hat)
         y_hard = (y_hat > threshold).int()
 
-    # Gather some bin statistics. We do this here because we then slice our volumes after this
-    # and need them to be 3D (if volumes).
-    cal_info = bin_stats(
-        y_pred=y_hat,
-        y_true=y,
-        num_prob_bins=num_prob_bins
-    )
-
     # If x is 5 dimensionsal, we need to take the midslice of the last dimension of all 
     # of our tensors.
     if len(x.shape) == 5:
@@ -109,12 +94,7 @@ def ShowPredictionsCallback(
     y = y.numpy().squeeze()
     y_hard = y_hard.numpy().squeeze()
     y_hat = y_hat.squeeze()
-
-    if bs == 1:
-        ncols = 7
-    else:
-        ncols = 4
-    f, axarr = plt.subplots(nrows=bs, ncols=ncols, figsize=(ncols * size_per_image, bs*size_per_image))
+    f, axarr = plt.subplots(nrows=bs, ncols=4, figsize=(4 * size_per_image, bs*size_per_image))
 
     # Go through each item in the batch.
     for b_idx in range(bs):
@@ -142,54 +122,6 @@ def ShowPredictionsCallback(
             axarr[3].set_title("Max Probs")
             im4 = axarr[3].imshow(max_probs, cmap='gray', vmin=0.0, vmax=1.0, interpolation='None')
             f.colorbar(im4, ax=axarr[3], orientation='vertical')
-
-
-            axarr[4].set_title("Brier Map")
-            im5 = axarr[4].imshow(
-                (max_probs - freq_map), 
-                cmap='RdBu_r', 
-                vmax=1.0, 
-                vmin=-1.0, 
-                interpolation='None')
-            f.colorbar(im5, ax=axarr[4], orientation='vertical')
-
-            miscal_map = np.zeros_like(max_probs)
-            # Figure out where each pixel belongs (in confidence)
-            toplabel_bin_ownership_map = get_bin_per_sample(
-                pred_map=max_probs[None],
-                n_spatial_dims=2,
-                class_wise=False,
-                num_prob_bins=num_prob_bins,
-                int_start=0.0,
-                int_end=1.0
-            ).squeeze()
-            # Fill the bin regions with the miscalibration.
-            max_probs = max_probs.numpy()
-            for bin_idx in range(num_prob_bins):
-                bin_mask = (toplabel_bin_ownership_map == bin_idx)
-                if bin_mask.sum() > 0:
-                    miscal_map[bin_mask] = (max_probs[bin_mask] - freq_map[bin_mask]).mean()
-
-            # Plot the miscalibration
-            axarr[5].set_title("Miscalibration Map")
-            im6 = axarr[5].imshow(
-                miscal_map, 
-                cmap='RdBu_r', 
-                vmax=0.2, 
-                vmin=-0.2, 
-                interpolation='None')
-            f.colorbar(im6, ax=axarr[5], orientation='vertical')
-
-            # Plot the reliability diagram for the binary case of the foreground.
-            reliability_diagram(
-                calibration_info=cal_info,
-                title="Reliability Diagram",
-                num_prob_bins=num_prob_bins,
-                class_type="Binary",
-                plot_type="bar",
-                bar_color="blue",
-                ax=axarr[6]
-            )
 
             # turn off the axis and grid
             for x_idx, ax in enumerate(axarr):
