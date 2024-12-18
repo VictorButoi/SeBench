@@ -1,0 +1,43 @@
+data:
+  _class: ese.datasets.Roads
+  version: '?' 
+  in_channels: 3
+  out_channels: 1 
+  train_kwargs:
+    split: 'train'
+    transforms:
+      - albumentations.RandomCrop:
+          height: 500
+          width: 500
+  val_kwargs: 
+    split: 'val'
+    transforms:
+      - albumentations.RandomCrop:
+          height: 500
+          width: 500
+
+dataloader:
+  batch_size: 4
+  num_workers: 4
+
+log:
+  root: '?'
+  checkpoint_freq: 20 
+  metrics:
+    dice_score:
+      _fn: ionpy.metrics.dice_score
+      batch_reduction: 'mean' 
+      ignore_empty_labels: False 
+      from_logits: True
+    area_estimation_error:
+      _fn: ese.losses.area_estimation_error
+      from_logits: True
+      square_diff: False
+
+model:
+  filters: [64, 64, 64, 64, 64, 64, 64]
+  convs_per_block: 3
+
+train:
+  epochs: 3000
+  eval_freq: 30 

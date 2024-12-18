@@ -1,0 +1,49 @@
+data:
+  _class: ese.datasets.CityScapes
+  in_channels: 3
+  out_channels: 19 
+
+dataloader:
+  batch_size: 4
+  num_workers: 2
+
+log:
+  root: '?'
+  checkpoint_freq: 20 
+  metrics:
+    dice_score:
+      _fn: ionpy.metrics.dice_score
+      batch_reduction: 'mean' 
+      ignore_empty_labels: True 
+      from_logits: True
+    ece_loss:
+      _fn: ese.metrics.image_ece_loss
+      num_prob_bins: 15
+      from_logits: True
+    edge_ece_loss:
+      _fn: ese.metrics.image_edge_ece_loss
+      num_prob_bins: 15
+      neighborhood_width: 3
+      from_logits: True
+
+loss_func: 
+  _class: ionpy.loss.SoftDiceLoss
+  from_logits: True
+  batch_reduction: 'mean' 
+  ignore_empty_labels: True 
+
+model:
+  filters: [128, 128, 128, 128, 128]
+
+# AUGMNENTATIONS USED FOR CITYSCAPEV
+augmentations:
+    train:
+        - albumentations.Resize:
+            height: 256
+            width: 512
+        - HorizontalFlip:
+            p: 0.5
+    val:
+        - albumentations.Resize: # Maybe strange to do this, but we want to be able to compare the results.
+            height: 256
+            width: 512

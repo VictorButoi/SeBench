@@ -1,0 +1,39 @@
+data:
+  _class: ese.datasets.WMH
+  hospital: Combined 
+  annotator: annotator_o12
+  version: 2.0
+  in_channels: 1
+  out_channels: 1 
+  iters_per_epoch: 100 
+  preload: False # Important, 3D volumes super expensive to move to GPU
+
+dataloader:
+  batch_size: 4
+  num_workers: 4 # 3D data can be a bottleneck
+
+optim:
+  lr: '?'
+
+log:
+  root: '?'
+  checkpoint_freq: 10 
+  metrics:
+    dice_score:
+      _fn: ionpy.metrics.dice_score
+      batch_reduction: 'mean' 
+      ignore_empty_labels: False 
+      from_logits: True
+    area_estimation_error:
+      _fn: ese.losses.area_estimation_error
+      from_logits: True
+      square_diff: False
+
+model:
+  filters: [64, 64, 64, 64, 64, 64]
+  dims: 3
+  convs_per_block: 3
+
+train:
+  epochs: 3000
+  eval_freq: 10 

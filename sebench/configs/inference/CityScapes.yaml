@@ -1,0 +1,23 @@
+log:
+  track_label_amounts: True
+  min_fg_pixels: 0
+
+inference_data:
+    input_type: image 
+    split: ("cal", "val")
+
+global_calibration:
+    num_classes: 19
+
+qual_metrics:
+    - Dice:
+        _fn: ese.metrics.dice_score
+        from_logits: True
+        batch_reduction: 'mean' 
+        ignore_empty_labels: True
+        metric_type: quality
+
+augmentations:
+    - Resize:
+        height: 256
+        width: 512

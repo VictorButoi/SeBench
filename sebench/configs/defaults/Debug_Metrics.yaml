@@ -1,0 +1,8 @@
+# Define global metrics when you want to verify that these are the same as the image
+# based metrics, per image.
+global_cal_metrics:
+    # ECE Metrics
+    ########################################################
+    - Edge-ECE:
+        _fn: ese.metrics.ece.edge_ece_loss
+        cal_type: 'toplabel'

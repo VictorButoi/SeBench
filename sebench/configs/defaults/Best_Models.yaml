@@ -1,0 +1,15 @@
+OCTA:
+     - "/storage/vbutoi/scratch/ESE/training/October_2024/10_29_24_OCTA_FULLRES_LONG_wAug/20241029_105304-727M-5a91cc1ba65e1fb55f2b9eba69eb2bb1"
+     - "/storage/vbutoi/scratch/ESE/training/October_2024/10_29_24_OCTA_FULLRES_LONG_wAug/20241029_105307-XVFK-181c60523156ebb1447c7cee523b97fc"
+
+ISLES:
+     - "/storage/vbutoi/scratch/ESE/training/September_2024/09_25_24_ISLES_3D_Dice_HeavyAug/20240925_234556-HGRQ-56cd3bf7df7a1b7d2a453b296d64407d"
+     - "/storage/vbutoi/scratch/ESE/training/October_2024/10_15_24_ISLES_3D_CrossEntropy_HeavyAug_1e-4/20241015_161852-SSRM-0ec64af61add5b3a5814fd73a2edd4ff"
+
+Roads:
+     - "/storage/vbutoi/scratch/ESE/training/October_2024/10_21_24_Roads_FullRes_Cleaned_SoftDice/20241021_112656-V971-afa9c1ed9cdd1b6cbeef9a671d86dd1c"
+     - "/storage/vbutoi/scratch/ESE/training/October_2024/10_21_24_Roads_FullRes_Cleaned_CrossEntropy/20241021_112625-592Z-5e6c54e65358ea3b7fe09f3dab3d97b1"
+
+WMH:
+     - "/storage/vbutoi/scratch/ESE/training/October_2024/10_27_24_WMH_AllHospitals_wHeavyAug_fixed/20241027_222955-9ED6-91140e7bcb5c786adea719e1ce831a37"
+     - "/storage/vbutoi/scratch/ESE/training/October_2024/10_27_24_WMH_AllHospitals_wHeavyAug_fixed/20241027_222959-DTUR-5aa8687c47ebc88fbc5ee52bd0ce719b"

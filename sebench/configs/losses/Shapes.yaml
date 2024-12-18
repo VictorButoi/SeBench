@@ -1,0 +1,11 @@
+dice_loss: 
+  _class: ionpy.loss.SoftDiceLoss
+  from_logits: True
+  batch_reduction: 'mean' 
+  ignore_empty_labels: False
+  ignore_index: 0 
+
+ce_loss: 
+  _class: ionpy.loss.PixelCELoss 
+  from_logits: True 
+  batch_reduction: 'mean' 

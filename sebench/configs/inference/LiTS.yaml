@@ -1,0 +1,21 @@
+log:
+  track_label_amounts: True 
+
+inference_data:
+  input_type: image 
+  return_gt_proportion: True
+  label_threshold: 0.5
+  split: ("cal", "val")
+
+global_calibration:
+    num_classes: 1
+
+model:
+    pred_label: 0
+
+qual_metrics:
+    - Dice:
+        _fn: ese.metrics.dice_score
+        batch_reduction: 'mean' 
+        ignore_empty_labels: False
+        metric_type: quality

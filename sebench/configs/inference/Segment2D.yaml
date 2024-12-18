@@ -1,0 +1,48 @@
+log:
+  track_label_amounts: True 
+
+experiment:
+  num_supports: 5
+  crosseval_incontex: False 
+  inf_kwargs:
+    from_logits: True
+    threshold: 0.5 
+    temperature: 1.0
+  
+inference_data:
+  _class: "ese.datasets.Segment2D"
+  resolution: 128 
+  slicing: "midslice"
+  label_threshold: 0.5
+  return_data_key: True # Important for tracking if things are in the support set or not.
+
+global_calibration:
+    num_classes: 1
+
+qual_metrics:
+    - Dice:
+        _fn: ese.metrics.dice_score
+        batch_reduction: 'mean' 
+        ignore_empty_labels: False
+        metric_type: quality
+    - soft_RAVE:
+        _fn: ese.losses.area_estimation_error
+        relative: True
+        abs_diff: True
+        square_diff: False
+        use_hard_pred: False
+        metric_type: quality
+    - hard_RAVE:
+        _fn: ese.losses.area_estimation_error
+        relative: True
+        abs_diff: True
+        square_diff: False
+        use_hard_pred: True 
+        metric_type: quality
+
+image_cal_metrics:
+    - Image_ECE:
+        _fn: ese.metrics.calibration.image_ece_loss
+        cal_type: 'toplabel'
+
+      

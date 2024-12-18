@@ -1,0 +1,44 @@
+data:
+  _class: ese.datasets.Shapes
+  binarize: True 
+  preload: False 
+  in_channels: 1
+  out_channels: 2 
+  version: '?'
+  subsplit: '?'
+  iters_per_epoch: 250 
+
+dataloader:
+  batch_size: 4
+  num_workers: 2
+
+log:
+  root: '?'
+  checkpoint_freq: 20 
+  metrics:
+    dice_score:
+      _fn: ionpy.metrics.dice_score
+      batch_reduction: 'mean' 
+      ignore_empty_labels: False 
+      ignore_index: 0
+      from_logits: True
+    ece_loss:
+      _fn: ese.metrics.image_ece_loss
+      num_prob_bins: 15
+      from_logits: True
+    edge_ece_loss:
+      _fn: ese.metrics.image_edge_ece_loss
+      num_prob_bins: 15
+      neighborhood_width: 3
+      from_logits: True
+
+loss_func: 
+  _class: ionpy.loss.SoftDiceLoss
+  from_logits: True
+  batch_reduction: 'mean' 
+  ignore_empty_labels: False
+  ignore_index: 0 
+
+model:
+  filters: [16, 16, 16, 16]
+  convs_per_block: 2

@@ -1,0 +1,15 @@
+Affine:
+  albumentations.Affine:
+    translate_percent: [-0.1, 0.1]
+    p: 0.5 
+
+Elastic:
+  albumentations.ElasticTransform:
+    alpha: 30
+    sigma: 4 
+    alpha_affine: 0.5
+    p: 0.5 
+
+HorizontalFlip:
+  albumentations.HorizontalFlip:
+    p: 0.5

@@ -1,0 +1,29 @@
+experiment: 
+    inf_kwargs:
+        from_logits: True
+        threshold: 0.5 
+        temperature: 1.0
+
+log:
+  track_label_amounts: True 
+
+inference_data:
+  label: 255
+  label_threshold: 0.5
+  return_gt_proportion: False 
+  split: ("cal", "val")
+
+dataloader:
+    batch_size: 8
+    num_workers: 3
+
+global_calibration:
+    num_classes: 1
+
+qual_metrics:
+    - Dice:
+        _fn: ese.metrics.dice_score
+        batch_reduction: 'mean' 
+        ignore_empty_labels: False
+        metric_type: quality
+    

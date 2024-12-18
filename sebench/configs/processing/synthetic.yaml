@@ -1,0 +1,61 @@
+gen_opts:
+    # Controls the number of images to generate.
+    img_res: 
+        - 256 
+        - 256
+    # Controls the number of "regions" in the image, each is a label.
+    num_labels_range: 
+        - 9 
+        - 9 
+    # Controls the relative size of the regions in the image. Big = Bigger regions
+    shapes_im_scales: 
+        - 32 
+    # Unclear what this does.
+    shapes_warp_scales: 
+        - 16
+        - 32 
+        - 64 
+        - 128
+    warp_res: 
+        - 16
+        - 32 
+        - 64
+
+aug_opts:
+    shapes_im_max_std_range: 
+        - 3
+        - 3 
+    std_min_range: 
+        - 0.2 
+        - 0.2
+    std_max_range: 
+        - 0.5
+        - 0.5 
+    lab_int_interimage_std_range: 
+        - 1.0
+        - 1.0
+    shapes_warp_max_std_range: 
+        - 12.0 
+        - 12.0
+    warp_std_range:
+        - 10.0
+        - 10.0 
+    bias_res_range: 
+        - 64 
+        - 64 
+    bias_std_range: 
+        - 0.3 
+        - 0.3
+    blur_std_range: 
+        - 8 
+        - 8 
+    circle_x_range:
+        - 0 
+        - 128 
+    circle_y_range:
+        - 0 
+        - 128 
+    circle_rad_range:
+        - 24 
+        - 32 
+    
