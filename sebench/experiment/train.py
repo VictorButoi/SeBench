@@ -20,7 +20,7 @@ from pprint import pprint
 from typing import Optional
 
 
-class CalibrationExperiment(TrainExperiment):
+class SegTrainExperiment(TrainExperiment):
 
     def build_augmentations(self, load_aug_pipeline):
         super().build_augmentations()

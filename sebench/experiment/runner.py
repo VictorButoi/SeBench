@@ -4,10 +4,36 @@ import slite.submit as slubmit
 from ionpy.util import Config
 # misc imports
 from pathlib import Path
+from datetime import datetime
+from ionpy.util.ioutil import autosave
 from pydantic import validate_arguments
 from typing import List, Optional, Any, Callable
-# ESE imports
-from ese.analysis.analysis_utils.helpers import log_exp_config_objs
+
+
+def log_exp_config_objs(
+    group,
+    base_cfg,
+    exp_cfg, 
+    add_date, 
+    scratch_root
+):
+    # Get the experiment name.
+    exp_name = f"{exp_cfg['group']}/{exp_cfg.get('subgroup', '')}"
+
+    # Optionally, add today's date to the run name.
+    if add_date:
+        today_date = datetime.now()
+        formatted_date = today_date.strftime("%m_%d_%y")
+        mod_exp_name = f"{formatted_date}_{exp_name}"
+    else:
+        mod_exp_name = exp_name
+
+    # Save the experiment config.
+    exp_root = scratch_root / group / mod_exp_name
+
+    # Save the base config and the experiment config.
+    autosave(base_cfg, exp_root / "base.yml") # SAVE #1: Experiment config
+    autosave(exp_cfg, exp_root / "experiment.yml") # SAVE #1: Experiment config
 
 
 @validate_arguments(config=dict(arbitrary_types_allowed=True))
@@ -25,7 +51,7 @@ def submit_input_check(
 
 
 @validate_arguments(config=dict(arbitrary_types_allowed=True))
-def run_ese_exp(
+def run_exp(
     config: Config,
     gpu: str = "0",
     show_examples: bool = False,
@@ -70,7 +96,7 @@ def run_ese_exp(
 
 
 @validate_arguments(config=dict(arbitrary_types_allowed=True))
-def submit_ese_exps(
+def submit_exps(
     group: str,
     base_cfg: dict,
     exp_cfg: dict,
