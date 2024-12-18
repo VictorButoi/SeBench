@@ -21,10 +21,6 @@ log:
       ignore_empty_labels: False 
       from_logits: True
 
-model:
-  filters: [64, 64, 64, 64, 64, 64]
-  convs_per_block: 3
-
 train:
   epochs: 3000
   eval_freq: 10 

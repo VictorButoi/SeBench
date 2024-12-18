@@ -6,7 +6,7 @@ from torch import nn
 from torch import Tensor
 import torch.nn.functional as F
 # misc imports
-from typing import Optional, Any
+from typing import Optional, Any, List
 from dataclasses import dataclass
 from pydantic import validate_arguments
 
@@ -15,7 +15,7 @@ from pydantic import validate_arguments
 @dataclass(eq=False, repr=False)
 class UNet(nn.Module):
 
-    filters: list[int]
+    filters: List[int]
     in_channels: int = 1
     out_channels: int = 1
     dec_filters: Optional[list[int]] = None
