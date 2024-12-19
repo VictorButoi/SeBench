@@ -497,11 +497,14 @@ def get_training_configs(
 
     # Add the dataset specific details.
     train_dataset_name = flat_exp_cfg_dict['data._class'].split('.')[-1]
-    dataset_cfg_file = train_cfg_root/ f"{train_dataset_name}.yaml"
-    with open(dataset_cfg_file, 'r') as d_file:
-        dataset_train_cfg = yaml.safe_load(d_file)
-    # Update the base config with the dataset specific config.
-    base_cfg = base_cfg.update([dataset_train_cfg])
+    dataset_cfg_file = train_cfg_root / f"{train_dataset_name}.yaml"
+    if dataset_cfg_file.exists():
+        with open(dataset_cfg_file, 'r') as d_file:
+            dataset_train_cfg = yaml.safe_load(d_file)
+        # Update the base config with the dataset specific config.
+        base_cfg = base_cfg.update([dataset_train_cfg])
+    else:
+        print(f"Warning: No dataset specific train config found for {train_dataset_name}.")
     
     # Get the information about seeds.
     seed = flat_exp_cfg_dict.pop('experiment.seed', 40)

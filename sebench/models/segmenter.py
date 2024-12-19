@@ -13,16 +13,17 @@ from pydantic import validate_arguments
 # Manual implemtation of using a Vision Transformer for segmentation.
 @validate_arguments
 @dataclass(eq=False, repr=False)
-class SegViT(nn.Module):
+class Segmenter(nn.Module):
 
+    dims: int = 2
+    num_heads: int = 8
     model_dim: int = 16
     num_layers: int = 5
     in_channels: int = 1
     out_channels: int = 1
-    patchsize: int = 4
+    patchsize: int = 8
+    img_res: tuple[int, int] = (64, 64)
     out_activation: Optional[str] = None
-    num_heads: int = 8
-    dims: int = 2
 
     def __post_init__(self):
         super().__init__()
@@ -31,17 +32,30 @@ class SegViT(nn.Module):
             f"layer_{i}": MHA(self.model_dim, self.num_heads) for i in range(self.num_layers)
         })
         # Have an output conv to the number of classes
+        self.proj_layer = nn.Linear(self.patchsize*self.patchsize*self.in_channels, self.model_dim)
         self.out_conv = nn.Conv2d(1, self.out_channels, kernel_size=3)
+
+        self.num_patches = (self.img_res[0] // self.patchsize) * (self.img_res[1] // self.patchsize)
+        self.pos_embeddings = nn.Parameter(torch.randn(1, self.num_patches, self.model_dim))
     
     def forward(self, x):
-        B, _, H, W = x.shape
+        B, C, H, W = x.shape
         # Ensure that the image can be tiled by the patchsize
-        assert H % self.patchsize == 0 and W % self.patchsize == 0, "Patchsize must cleanly divide the image."
-        num_patches = (H // self.patchsize) * (W // self.patchsize)
-        x = x.view(B, num_patches, -1) # B, L, D? TODO: Figure out what happens if multi-channel RGB input.
+        # First, we need to move the channel dim to be last so that we can project it.
+        print(x.shape)
+        x = x.permute(0, 2, 3, 1) # B, H, W, C
+        # Next we need to divide it into patches.
+        x = x.view(B, self.num_patches, self.patchsize, self.patchsize, C)
+        x = x.flatten(2) # B, num_patches, patchsize*patchsize*C
+        # Project the patches to the model dim.
+        x = self.proj_layer(x)
+        # Add the positional embeddings.
+        x  = x + self.pos_embeddings
+
         # Run through the transformer layers.
         for l_name, layer in self.mha_layers.items():
             x = layer(x)
+
         # Finally, we need to recombine all of the patches into our image.
         x = x.view(B, 1, H, W) # TODO: Figure out 1 here, this feels wrong.
         # Do the outconv to the number of channels.
