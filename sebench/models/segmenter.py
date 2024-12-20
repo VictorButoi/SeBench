@@ -1,9 +1,9 @@
-# ionpy imports
-from ionpy.nn import get_nonlinearity, MHA 
 # torch imports
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
+# Local imports
+from .segmenter_utils import TransformerBlock 
 # misc imports
 from dataclasses import dataclass
 from typing import Optional, Any, List
@@ -29,7 +29,7 @@ class Segmenter(nn.Module):
         super().__init__()
         # Define a bunch of multi-head attention layers which are the main backbone.
         self.mha_layers = nn.ModuleDict({
-            f"layer_{i}": MHA(self.model_dim, self.num_heads) for i in range(self.num_layers)
+            f"layer_{i}": TransformerBlock(self.model_dim, self.num_heads) for i in range(self.num_layers)
         })
         # Have an output conv to the number of classes
         self.proj_layer = nn.Linear(self.patchsize*self.patchsize*self.in_channels, self.model_dim)
