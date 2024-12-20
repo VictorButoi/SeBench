@@ -42,7 +42,6 @@ class Segmenter(nn.Module):
         B, C, H, W = x.shape
         # Ensure that the image can be tiled by the patchsize
         # First, we need to move the channel dim to be last so that we can project it.
-        print(x.shape)
         x = x.permute(0, 2, 3, 1) # B, H, W, C
         # Next we need to divide it into patches.
         x = x.view(B, self.num_patches, self.patchsize, self.patchsize, C)
