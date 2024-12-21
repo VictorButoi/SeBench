@@ -71,6 +71,10 @@ def ShowPredictionsCallback(
         if pred_cls != "y_probs":
             y_hat = torch.sigmoid(y_hat)
         y_hard = (y_hat > threshold).int()
+    
+    # If y isn't 1 in the second dim, we need to argmax it. (it is one-hot encoded)
+    if len(y.shape) == 4 and y.shape[1] != 1:
+        y = torch.argmax(y, dim=1)
 
     # If x is 5 dimensionsal, we need to take the midslice of the last dimension of all 
     # of our tensors.

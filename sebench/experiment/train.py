@@ -134,7 +134,7 @@ class SegTrainExperiment(TrainExperiment):
         if augmentation:
             with torch.no_grad():
                 x, y = self.aug_pipeline(x, y)
-
+            
         # Zero out the gradients.
         self.optim.zero_grad()
         

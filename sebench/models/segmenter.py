@@ -15,16 +15,15 @@ from typing import Optional, Any, List, Literal
 @dataclass(eq=False, repr=False)
 class Segmenter(nn.Module):
 
-    dims: int = 2
+    in_channels: int
+    out_channels: int
+    img_res: List[int]
     num_heads: int = 8
     patchsize: int = 8
     model_dim: int = 16
     num_layers: int = 5
-    in_channels: int = 1
-    out_channels: int = 1
-    img_res: tuple[int, int] = (64, 64)
     out_activation: Optional[str] = None
-    decoder: Literal["mask", "linear"] = "linear"
+    dec_type: Literal["mask", "linear"] = "linear"
 
     def __post_init__(self):
         super().__init__()
@@ -34,9 +33,9 @@ class Segmenter(nn.Module):
         })
 
         # Define the decoder
-        if self.decoder == "mask":
+        if self.dec_type == "mask":
             self.decoder = MaskDecoder()
-        elif self.decoder == "linear":
+        elif self.dec_type == "linear":
             self.decoder = LinearDecoder(
                 img_res=self.img_res,
                 d_model=self.model_dim,
@@ -44,11 +43,9 @@ class Segmenter(nn.Module):
                 out_classes=self.out_channels,
             )
         else:
-            raise ValueError(f"Decoder type {self.decoder} not recognized.")
+            raise ValueError(f"Decoder type {self.dec_type} not recognized.")
         # Have an output conv to the number of classes
         self.proj_layer = nn.Linear(self.patchsize*self.patchsize*self.in_channels, self.model_dim)
-        self.out_conv = nn.Conv2d(1, self.out_channels, kernel_size=3)
-
         self.num_patches = (self.img_res[0] // self.patchsize) * (self.img_res[1] // self.patchsize)
         self.pos_embeddings = nn.Parameter(torch.randn(1, self.num_patches, self.model_dim))
     
@@ -66,9 +63,8 @@ class Segmenter(nn.Module):
         x  = x + self.pos_embeddings
 
         # Run through the transformer layers.
-        x = self.encoder(x)
-        # for l_name, layer in self.mha_layers.items():
-        #     x = layer(x)
+        for layer in self.encoder.values():
+            x = layer(x)
 
         # Run it through the decoder.
         x = self.decoder(x)
