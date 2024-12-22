@@ -1,26 +1,12 @@
-# torch imports
-import torch
 # ionpy imports
-from datetime import datetime
-from ionpy.util.ioutil import autosave
-from ionpy.util.hash import json_digest
-from ionpy.analysis import ResultsLoader
 from ionpy.util import Config, dict_product
-from ionpy.experiment.util import absolute_import, generate_tuid
-from ionpy.util.config import check_missing, HDict, valmap, config_digest
+from ionpy.util.config import check_missing
 # misc imports
 import os
-import ast
-import json
 import yaml
-import inspect
 import itertools
-import numpy as np
 from pathlib import Path
-import matplotlib.pyplot as plt
-import matplotlib.colors as mcolors
 from pydantic import validate_arguments
-from typing import Any, Optional, Literal, List
 # local imports
 import sebench.scripts.utils as utils
 
@@ -175,7 +161,7 @@ def get_inference_configs(
     for option_dict in dataset_cfgs:
         for exp_cfg_update in dict_product(option_dict):
             # Add the inference dataset specific details.
-            dataset_inf_cfg_dict = get_inference_dset_info(
+            dataset_inf_cfg_dict = utils.get_inference_dset_info(
                 cfg=exp_cfg_update,
                 code_root=code_root
             )
