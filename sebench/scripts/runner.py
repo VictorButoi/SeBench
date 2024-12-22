@@ -74,10 +74,10 @@ def run_exp(
         if not show_examples and "step" in cfg["callbacks"]:
             cfg["callbacks"].pop("step")
         # If not tracking wandb, remove the callback if its in the config.
-        # TODO: Maybe remove this in a more elegant way.
-        wandb_callback = "ese.callbacks.WandbLogger"
-        if not track_wandb and wandb_callback in cfg["callbacks"]["epoch"]:
-            cfg["callbacks"]["epoch"].remove(wandb_callback)
+        if not track_wandb:
+            for epoch_callback in cfg["callbacks"]["epoch"]:
+                if epoch_callback.split(".")[-1] == "WandbLogger":
+                    cfg["callbacks"]["epoch"].remove(epoch_callback)
     # Either run the experiment or the job function.
     run_args = {
         "config": cfg,
@@ -101,12 +101,12 @@ def submit_exps(
     base_cfg: dict,
     exp_cfg: dict,
     config_list: List[Config],
+    scratch_root: Path,
     add_date: bool = True,
     track_wandb: bool = False,
     available_gpus: List[str] = ["0"],
     job_func: Optional[Callable] = None,
-    experiment_class: Optional[Any] = None,
-    scratch_root: Path = Path("/storage/vbutoi/scratch/ESE"),
+    experiment_class: Optional[Any] = None
 ):
     # Checkjob_func if the input is valid.
     submit_input_check(experiment_class, job_func)
@@ -130,10 +130,11 @@ def submit_exps(
             if "step" in cfg["callbacks"]:
                 cfg["callbacks"].pop("step")
             # If you don't want to track wandb, then remove the wandb callback.
-            # TODO: wandb_callback defined multiple times, doesn't need to be---very bad code schema.
-            wandb_callback = "ese.callbacks.WandbLogger"
-            if not track_wandb and wandb_callback in cfg["callbacks"]["epoch"]:
-                cfg["callbacks"]["epoch"].remove(wandb_callback)
+            # If not tracking wandb, remove the callback if its in the config.
+            if not track_wandb:
+                for epoch_callback in cfg["callbacks"]["epoch"]:
+                    if epoch_callback.split(".")[-1] == "WandbLogger":
+                        cfg["callbacks"]["epoch"].remove(epoch_callback)
         # Add the modified config to the list.
         modified_cfgs.append(cfg)
     # Run the set of configs.

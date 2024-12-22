@@ -29,7 +29,7 @@ def get_training_configs(
 
     # Add the dataset specific details.
     train_dataset_name = flat_exp_cfg_dict['data._class'].split('.')[-1]
-    dataset_cfg_file = config_root /"training" / f"{train_dataset_name}.yaml"
+    dataset_cfg_file = config_root / "training" / f"{train_dataset_name}.yaml"
     if dataset_cfg_file.exists():
         with open(dataset_cfg_file, 'r') as d_file:
             dataset_train_cfg = yaml.safe_load(d_file)
@@ -64,10 +64,9 @@ def get_training_configs(
 def get_inference_configs(
     exp_cfg: dict,
     base_cfg: Config,
-    add_date: bool = True,
-    use_best_models: bool = False,
-    code_root: Path = Path("/storage/vbutoi/projects/SeBench"),
-    scratch_root: Path = Path("/storage/vbutoi/scratch/SeBench")
+    code_root: Path,
+    scratch_root: Path,
+    add_date: bool = True
 ):
     # We need to flatten the experiment config to get the different options.
     # Building new yamls under the exp_name name for model type.
@@ -79,18 +78,6 @@ def get_inference_configs(
     # Get the root for the inference experiments.
     inference_log_root = utils.get_exp_root(exp_name, group="inference", add_date=add_date, scratch_root=scratch_root)
 
-    # In our general inference sheme, often we want to use the best models corresponding to a dataset
-    if add_date:
-        eval_dataset = group_str.split('_')[0]
-    else:
-        eval_dataset = group_str.split('_')[3] # Group format is like MM_DD_YY_Dataset
-    if eval_dataset in ['OCTA', 'ISLES', "WMH"] and use_best_models:
-        # Load the default best models, and update the exp config with those as the base models.
-        with open(code_root / "sebench" / "configs" / "defaults" / "Best_Models.yaml", 'r') as file:
-            best_models_cfg = yaml.safe_load(file)
-        # Update the exp_cfg with the best models.
-        exp_cfg['base_model'] = best_models_cfg[eval_dataset]
-    
     # Flatten the config.
     flat_exp_cfg_dict = utils.flatten_cfg2dict(exp_cfg)
     # For any key that is a tuple we need to convert it to a list, this is an artifact of the flattening..
@@ -108,15 +95,6 @@ def get_inference_configs(
         elif isinstance(val, str) and  '...' in val:
             # Finally stick this back in as a string tuple version.
             flat_exp_cfg_dict[key] = utils.get_range_from_str(val)
-
-    # Load the inference cfg from local.
-    ##################################################
-    default_cfg_root = code_root / "sebench" / "configs" / "defaults"
-    ##################################################
-    with open(default_cfg_root / "Calibration_Metrics.yaml", 'r') as file:
-        cal_metrics_cfg = yaml.safe_load(file)
-    ##################################################
-    base_cfg = base_cfg.update([cal_metrics_cfg])
 
     # Gather the different config options.
     cfg_opt_keys = list(flat_exp_cfg_dict.keys())
@@ -185,9 +163,9 @@ def get_inference_configs(
 def get_restart_configs(
     exp_cfg: dict,
     base_cfg: Config,
+    cfg_root: Path,
+    scratch_root: Path,
     add_date: bool = True,
-    scratch_root: Path = Path("/storage/vbutoi/scratch/SeBench"),
-    train_cfg_root: Path = Path("/storage/vbutoi/projects/SeBench/sebench/configs/training"),
 ): 
     # We need to flatten the experiment config to get the different options.
     # Building new yamls under the exp_name name for model type.
@@ -200,7 +178,7 @@ def get_restart_configs(
     # If we are changing aspects of the dataset, we need to update the base config.
     if 'data._class' in restart_cfg_dict:
         # Add the dataset specific details.
-        dataset_cfg_file = train_cfg_root/ f"{restart_cfg_dict['data._class'].split('.')[-1]}.yaml"
+        dataset_cfg_file = cfg_root / 'training' / f"{restart_cfg_dict['data._class'].split('.')[-1]}.yaml"
         if dataset_cfg_file.exists():
             with open(dataset_cfg_file, 'r') as d_file:
                 dataset_train_cfg = yaml.safe_load(d_file)
