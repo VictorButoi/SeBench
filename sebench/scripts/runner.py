@@ -54,8 +54,8 @@ def submit_input_check(
 def run_exp(
     config: Config,
     gpu: str = "0",
-    show_examples: bool = False,
     track_wandb: bool = False,
+    show_examples: bool = False,
     run_name: Optional[str] = None,
     experiment_class: Optional[Any] = None,
     job_func: Optional[Callable] = None
