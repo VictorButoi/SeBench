@@ -23,7 +23,7 @@ from typing import Optional
 class SegTrainExperiment(TrainExperiment):
 
     def build_augmentations(self, load_aug_pipeline):
-        super().build_augmentations()
+        super().build_augmentations(load_aug_pipeline)
         if "augmentations" in self.config and load_aug_pipeline:
             self.aug_pipeline = build_aug_pipeline(self.config.to_dict()["augmentations"])
 

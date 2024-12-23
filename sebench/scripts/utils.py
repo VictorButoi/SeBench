@@ -228,3 +228,11 @@ def log_exp_config_objs(
     # Save the base config and the experiment config.
     autosave(base_cfg, exp_root / "base.yml") # SAVE #1: Experiment config
     autosave(exp_cfg, exp_root / "experiment.yml") # SAVE #1: Experiment config
+
+
+def pop_wandb_callback(cfg):
+    for epoch_callback in cfg["callbacks"]["epoch"]:
+        if isinstance(epoch_callback, str) and epoch_callback.split(".")[-1] == "WandbLogger":
+            cfg["callbacks"]["epoch"].remove(epoch_callback)
+        elif isinstance(epoch_callback, dict) and list(epoch_callback.keys())[0].split(".")[-1] == "WandbLogger":
+            cfg["callbacks"]["epoch"].remove(epoch_callback)

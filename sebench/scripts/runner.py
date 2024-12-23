@@ -7,7 +7,7 @@ from pathlib import Path
 from pydantic import validate_arguments
 from typing import List, Optional, Any, Callable
 # Local imports
-from sebench.scripts.utils import log_exp_config_objs, submit_input_check
+from sebench.scripts.utils import log_exp_config_objs, submit_input_check, pop_wandb_callback
 
 
 @validate_arguments(config=dict(arbitrary_types_allowed=True))
@@ -35,9 +35,7 @@ def run_exp(
             cfg["callbacks"].pop("step")
         # If not tracking wandb, remove the callback if its in the config.
         if not track_wandb:
-            for epoch_callback in cfg["callbacks"]["epoch"]:
-                if epoch_callback.split(".")[-1] == "WandbLogger":
-                    cfg["callbacks"]["epoch"].remove(epoch_callback)
+            pop_wandb_callback(cfg)
     # Either run the experiment or the job function.
     run_args = {
         "config": cfg,
@@ -92,9 +90,7 @@ def submit_exps(
             # If you don't want to track wandb, then remove the wandb callback.
             # If not tracking wandb, remove the callback if its in the config.
             if not track_wandb:
-                for epoch_callback in cfg["callbacks"]["epoch"]:
-                    if epoch_callback.split(".")[-1] == "WandbLogger":
-                        cfg["callbacks"]["epoch"].remove(epoch_callback)
+                pop_wandb_callback(cfg)
         # Add the modified config to the list.
         modified_cfgs.append(cfg)
     # Run the set of configs.
