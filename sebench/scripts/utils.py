@@ -1,5 +1,6 @@
 # ionpy imports
 from datetime import datetime
+from ionpy.util.ioutil import autosave
 from ionpy.util import Config, dict_product
 from ionpy.experiment.util import generate_tuid
 from ionpy.util.config import check_missing, HDict, valmap, config_digest
@@ -7,8 +8,9 @@ from ionpy.util.config import check_missing, HDict, valmap, config_digest
 import os
 import yaml
 import numpy as np
-from typing import List
+from datetime import datetime
 from pydantic import validate_arguments
+from typing import List, Any, Optional, Callable
 
 
 def list2tuple(val):
@@ -186,3 +188,43 @@ def get_inference_dset_info(
 
     # Return the data_cfg and the base_inf_dataset_cfg
     return inf_cfg_presets
+
+
+@validate_arguments(config=dict(arbitrary_types_allowed=True))
+def submit_input_check(
+    experiment_class: Optional[Any] = None,
+    job_func: Optional[Callable] = None
+):
+    use_exp_class = (experiment_class is not None)
+    use_job_func = (job_func is not None)
+    # xor images_defined pixel_preds_defined
+    assert use_exp_class ^ use_job_func,\
+        "Exactly one of experiment_class or job_func must be defined,"\
+             + " but got experiment_clss defined = {} and job_func defined = {}.".format(\
+            use_exp_class, use_job_func)
+
+
+def log_exp_config_objs(
+    group,
+    base_cfg,
+    exp_cfg, 
+    add_date, 
+    scratch_root
+):
+    # Get the experiment name.
+    exp_name = f"{exp_cfg['group']}/{exp_cfg.get('subgroup', '')}"
+
+    # Optionally, add today's date to the run name.
+    if add_date:
+        today_date = datetime.now()
+        formatted_date = today_date.strftime("%m_%d_%y")
+        mod_exp_name = f"{formatted_date}_{exp_name}"
+    else:
+        mod_exp_name = exp_name
+
+    # Save the experiment config.
+    exp_root = scratch_root / group / mod_exp_name
+
+    # Save the base config and the experiment config.
+    autosave(base_cfg, exp_root / "base.yml") # SAVE #1: Experiment config
+    autosave(exp_cfg, exp_root / "experiment.yml") # SAVE #1: Experiment config

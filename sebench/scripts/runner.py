@@ -4,50 +4,10 @@ import slite.submit as slubmit
 from ionpy.util import Config
 # misc imports
 from pathlib import Path
-from datetime import datetime
-from ionpy.util.ioutil import autosave
 from pydantic import validate_arguments
 from typing import List, Optional, Any, Callable
-
-
-def log_exp_config_objs(
-    group,
-    base_cfg,
-    exp_cfg, 
-    add_date, 
-    scratch_root
-):
-    # Get the experiment name.
-    exp_name = f"{exp_cfg['group']}/{exp_cfg.get('subgroup', '')}"
-
-    # Optionally, add today's date to the run name.
-    if add_date:
-        today_date = datetime.now()
-        formatted_date = today_date.strftime("%m_%d_%y")
-        mod_exp_name = f"{formatted_date}_{exp_name}"
-    else:
-        mod_exp_name = exp_name
-
-    # Save the experiment config.
-    exp_root = scratch_root / group / mod_exp_name
-
-    # Save the base config and the experiment config.
-    autosave(base_cfg, exp_root / "base.yml") # SAVE #1: Experiment config
-    autosave(exp_cfg, exp_root / "experiment.yml") # SAVE #1: Experiment config
-
-
-@validate_arguments(config=dict(arbitrary_types_allowed=True))
-def submit_input_check(
-    experiment_class: Optional[Any] = None,
-    job_func: Optional[Callable] = None
-):
-    use_exp_class = (experiment_class is not None)
-    use_job_func = (job_func is not None)
-    # xor images_defined pixel_preds_defined
-    assert use_exp_class ^ use_job_func,\
-        "Exactly one of experiment_class or job_func must be defined,"\
-             + " but got experiment_clss defined = {} and job_func defined = {}.".format(\
-            use_exp_class, use_job_func)
+# Local imports
+from sebench.scripts.utils import log_exp_config_objs, submit_input_check
 
 
 @validate_arguments(config=dict(arbitrary_types_allowed=True))
@@ -144,28 +104,3 @@ def submit_exps(
         exp_class=experiment_class,
         available_gpus=available_gpus,
     )
-
-def log_exp_config_objs(
-    group,
-    base_cfg,
-    exp_cfg, 
-    add_date, 
-    scratch_root
-):
-    # Get the experiment name.
-    exp_name = f"{exp_cfg['group']}/{exp_cfg.get('subgroup', '')}"
-
-    # Optionally, add today's date to the run name.
-    if add_date:
-        today_date = datetime.now()
-        formatted_date = today_date.strftime("%m_%d_%y")
-        mod_exp_name = f"{formatted_date}_{exp_name}"
-    else:
-        mod_exp_name = exp_name
-
-    # Save the experiment config.
-    exp_root = scratch_root / group / mod_exp_name
-
-    # Save the base config and the experiment config.
-    autosave(base_cfg, exp_root / "base.yml") # SAVE #1: Experiment config
-    autosave(exp_cfg, exp_root / "experiment.yml") # SAVE #1: Experiment config
