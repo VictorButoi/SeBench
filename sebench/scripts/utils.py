@@ -8,6 +8,7 @@ from ionpy.util.config import check_missing, HDict, valmap, config_digest
 import os
 import yaml
 import numpy as np
+from pathlib import Path
 from datetime import datetime
 from pydantic import validate_arguments
 from typing import List, Any, Optional, Callable
@@ -205,17 +206,15 @@ def submit_input_check(
 
 
 def log_exp_config_objs(
-    group,
-    base_cfg,
-    exp_cfg, 
-    add_date, 
-    scratch_root
+    exp_cfg: dict, 
+    base_cfg: dict,
+    submit_cfg: dict,
 ):
     # Get the experiment name.
     exp_name = f"{exp_cfg['group']}/{exp_cfg.get('subgroup', '')}"
 
     # Optionally, add today's date to the run name.
-    if add_date:
+    if submit_cfg.get('add_date', True):
         today_date = datetime.now()
         formatted_date = today_date.strftime("%m_%d_%y")
         mod_exp_name = f"{formatted_date}_{exp_name}"
@@ -223,7 +222,7 @@ def log_exp_config_objs(
         mod_exp_name = exp_name
 
     # Save the experiment config.
-    exp_root = scratch_root / group / mod_exp_name
+    exp_root = Path(f"{submit_cfg['scratch_root']}/{submit_cfg['group']}/{mod_exp_name}")
 
     # Save the base config and the experiment config.
     autosave(base_cfg, exp_root / "base.yml") # SAVE #1: Experiment config

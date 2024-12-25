@@ -5,7 +5,7 @@ from ionpy.util import Config
 # misc imports
 from pathlib import Path
 from pydantic import validate_arguments
-from typing import List, Optional, Any, Callable
+from typing import List, Optional, Any, Callable, Literal
 # Local imports
 from sebench.scripts.utils import log_exp_config_objs, submit_input_check, pop_wandb_callback
 
@@ -55,29 +55,22 @@ def run_exp(
 
 @validate_arguments(config=dict(arbitrary_types_allowed=True))
 def submit_exps(
-    group: str,
-    base_cfg: dict,
     exp_cfg: dict,
+    base_cfg: dict,
+    submit_cfg: dict,
     config_list: List[Config],
-    scratch_root: Path,
-    add_date: bool = True,
-    track_wandb: bool = False,
     available_gpus: List[str] = ["0"],
     job_func: Optional[Callable] = None,
     experiment_class: Optional[Any] = None
 ):
     # Checkjob_func if the input is valid.
     submit_input_check(experiment_class, job_func)
-
     # Save the experiment configs so we can know what we ran.
     log_exp_config_objs(
         exp_cfg=exp_cfg, 
         base_cfg=base_cfg, 
-        group=group, 
-        add_date=add_date, 
-        scratch_root=scratch_root
+        submit_cfg=submit_cfg,
     )
-
     # Modify a few things relating to callbacks.
     modified_cfgs = [] 
     for config in config_list:
@@ -89,14 +82,16 @@ def submit_exps(
                 cfg["callbacks"].pop("step")
             # If you don't want to track wandb, then remove the wandb callback.
             # If not tracking wandb, remove the callback if its in the config.
-            if not track_wandb:
+            if not submit_cfg['track_wandb']:
                 pop_wandb_callback(cfg)
         # Add the modified config to the list.
         modified_cfgs.append(cfg)
+    # Define a few things for submission.
+    submit_cfg['available_gpus'] = available_gpus
     # Run the set of configs.
     slubmit.submit_jobs(
         job_func=job_func,
-        config_list=modified_cfgs,
         exp_class=experiment_class,
-        available_gpus=available_gpus,
+        submit_cfg=submit_cfg,
+        config_list=modified_cfgs
     )
