@@ -2,11 +2,13 @@
 import torch
 # random imports
 import numpy as np
+import matplotlib.pyplot as plt
 from dataclasses import dataclass
 from typing import Any, List, Literal, Optional
 # ionpy imports
 from ionpy.datasets.path import DatapathMixin
 from ionpy.datasets.thunder import ThunderDataset
+from ionpy.augmentation import init_album_transforms
 from ionpy.util.validation import validate_arguments_init
 
 
@@ -15,7 +17,7 @@ from ionpy.util.validation import validate_arguments_init
 class OxfordPets(ThunderDataset, DatapathMixin):
 
     split: Literal["train", "cal", "val", "test"]
-    version: float = 0.2
+    version: float = 0.1
     preload: bool = False
     num_classes: Any = "all" 
     num_examples: Optional[int] = None
@@ -26,11 +28,11 @@ class OxfordPets(ThunderDataset, DatapathMixin):
         init_attrs = self.__dict__.copy()
         super().__init__(self.path, preload=self.preload)
         super().supress_readonly_warning()
-        # Get the subjects from the splits
+        # get the subjects from the splits
         samples = self._db["_splits"][self.split]
         classes = self._db["_classes"]
         if self.num_classes != "all":
-            assert isinstance(self.num_classes, int), "Must specify number of classes."
+            assert isinstance(self.num_classes, int), "must specify number of classes."
             selected_classes = np.random.choice(np.unique(classes), self.num_classes)
             self.samples = []
             self.classes = []
@@ -41,12 +43,12 @@ class OxfordPets(ThunderDataset, DatapathMixin):
         else:
             self.samples = samples 
             self.classes = classes
-        # Limit the number of examples available if necessary.
+        # limit the number of examples available if necessary.
         if self.num_examples is not None:
             self.samples = self.samples[:self.num_examples]
         self.class_map = {c: (i + 1) for i, c in enumerate(np.unique(classes))} # 1 -> 38 (0 background)
         self.return_data_id = False
-        # Control how many samples are in each epoch.
+        # control how many samples are in each epoch.
         self.num_samples = len(self.samples) if self.iters_per_epoch is None else self.iters_per_epoch
 
     def __len__(self):
@@ -92,34 +94,57 @@ class OxfordPets(ThunderDataset, DatapathMixin):
 
 
 # Binary version of the dataset
-class BinaryPets(OxfordPets):
+@validate_arguments_init
+@dataclass
+class BinaryPets(ThunderDataset, DatapathMixin):
 
-    split: Literal["train", "cal", "val", "test"] = "train"
-    version: float = 0.2
+    split: Literal["train", "cal", "val", "test"]
+    version: float = 0.1
     preload: bool = False
-    skip_classes: Optional[List[str]] = None
-    transforms: Optional[List[Any]] = None
+    num_examples: Optional[int] = None
+    iters_per_epoch: Optional[int] = None
+    transforms: Optional[Any] = None
+
+    def __post_init__(self):
+        super().__init__(self.path, preload=self.preload)
+        super().supress_readonly_warning()
+        # Get the subjects from the splits
+        samples = self._db["_splits"][self.split]
+        classes = self._db["_classes"]
+        # Limit the number of examples available if necessary.
+        if self.num_examples is not None:
+            self.samples = self.samples[:self.num_examples]
+        self.class_map = {c: (i + 1) for i, c in enumerate(np.unique(classes))} # 1 -> 38 (0 background)
+        self.return_data_id = False
+        # Control how many samples are in each epoch.
+        self.num_samples = len(self.samples) if self.iters_per_epoch is None else self.iters_per_epoch
+        # Initialize transforms (if you have a custom function)
+        self.transforms_pipeline = init_album_transforms(self.transforms)
 
     def __getitem__(self, key):
         example_name = self.samples[key]
         # Get the class and associated label
         img, mask = self._db[example_name]
+        # Move the img channel to the last dimension
+        img = np.moveaxis(img, 0, -1)
         if self.transforms:
-            img, mask = self.transforms(img, mask)
-        # Convert to float32
-        img = img.astype(np.float32)
-        mask = mask.astype(np.float32)[None]
-        assert img.dtype == np.float32, "Img must be float32 (so augmenetation doesn't break)!"
-        assert mask.dtype == np.float32, "Mask must be float32 (so augmentation doesn't break)!"
-
+            # move the img channel to the last dimension
+            print("Img shape before transform: ", img.shape)
+            print("Mask shape before transform: ", mask.shape)
+            transform_obj = self.transforms_pipeline(
+                image=img,
+                mask=mask
+            )
+            img, mask = transform_obj["image"], transform_obj["mask"]
+            print("Img shape after: ", img.shape)
+            print("Mask shape after: ", mask.shape)
         # Prepare the return dictionary.
         return_dict = {
-            "img": torch.from_numpy(img),
-            "label": torch.from_numpy(mask),
+            "img": img,
+            "label": mask.unsqueeze(0), # Add a channel dimension
         }
         if self.return_data_id:
             return_dict["data_id"] = example_name 
-
         return return_dict
 
     @property
