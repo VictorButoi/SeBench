@@ -129,15 +129,11 @@ class BinaryPets(ThunderDataset, DatapathMixin):
         img = np.moveaxis(img, 0, -1)
         if self.transforms:
             # move the img channel to the last dimension
-            print("Img shape before transform: ", img.shape)
-            print("Mask shape before transform: ", mask.shape)
             transform_obj = self.transforms_pipeline(
                 image=img,
                 mask=mask
             )
             img, mask = transform_obj["image"], transform_obj["mask"]
-            print("Img shape after: ", img.shape)
-            print("Mask shape after: ", mask.shape)
         # Prepare the return dictionary.
         return_dict = {
             "img": img,
