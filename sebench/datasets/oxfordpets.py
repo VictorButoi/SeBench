@@ -101,9 +101,10 @@ class BinaryPets(ThunderDataset, DatapathMixin):
     split: Literal["train", "cal", "val", "test"]
     version: float = 0.1
     preload: bool = False
+    transforms: Optional[Any] = None
     num_examples: Optional[int] = None
     iters_per_epoch: Optional[int] = None
-    transforms: Optional[Any] = None
+    label: Literal["seg", "image"] = "seg"
 
     def __post_init__(self):
         super().__init__(self.path, preload=self.preload)
@@ -134,13 +135,18 @@ class BinaryPets(ThunderDataset, DatapathMixin):
                 mask=mask
             )
             img, mask = transform_obj["image"], transform_obj["mask"]
-        # Prepare the return dictionary.
-        return_dict = {
-            "img": img,
-            "label": mask.unsqueeze(0), # Add a channel dimension
-        }
+        # Prepare return dictionary
+        return_dict = {"img": img}
+        # Either we are predicting the class (for classification) 
+        # or the image itself (for reconstruction).
+        if self.label == "seg":
+            return_dict["label"] = mask.unsqueeze(0)
+        else:
+            return_dict["label"] = img 
+
         if self.return_data_id:
             return_dict["data_id"] = example_name 
+
         return return_dict
 
     @property
