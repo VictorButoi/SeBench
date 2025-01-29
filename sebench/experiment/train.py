@@ -60,6 +60,9 @@ class SegTrainExperiment(TrainExperiment):
 
         self.train_dl = DataLoader(self.train_dataset, shuffle=True, **dl_cfg)
         self.val_dl = DataLoader(self.val_dataset, shuffle=False, drop_last=False, **dl_cfg)
+        # Print the number of samples in the dataset.
+        print(f"Number of train samples: {self.train_dataset}")
+        print(f"Number of val samples: {self.val_dataset}")
 
     def build_model(self):
         # Move the information about channels to the model config.

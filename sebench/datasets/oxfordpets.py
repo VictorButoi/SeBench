@@ -110,7 +110,7 @@ class BinaryPets(ThunderDataset, DatapathMixin):
         super().__init__(self.path, preload=self.preload)
         super().supress_readonly_warning()
         # Get the subjects from the splits
-        samples = self._db["_splits"][self.split]
+        self.samples = self._db["_splits"][self.split]
         classes = self._db["_classes"]
         # Limit the number of examples available if necessary.
         if self.num_examples is not None:
@@ -121,6 +121,9 @@ class BinaryPets(ThunderDataset, DatapathMixin):
         self.num_samples = len(self.samples) if self.iters_per_epoch is None else self.iters_per_epoch
         # Initialize transforms (if you have a custom function)
         self.transforms_pipeline = init_album_transforms(self.transforms)
+
+    def __len__(self):
+        return self.num_samples
 
     def __getitem__(self, key):
         example_name = self.samples[key]
