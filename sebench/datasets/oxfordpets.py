@@ -105,6 +105,7 @@ class BinaryPets(ThunderDataset, DatapathMixin):
     num_examples: Optional[int] = None
     iters_per_epoch: Optional[int] = None
     label: Literal["seg", "image"] = "seg"
+    data_root: Optional[str] = None
 
     def __post_init__(self):
         super().__init__(self.path, preload=self.preload)
@@ -131,6 +132,8 @@ class BinaryPets(ThunderDataset, DatapathMixin):
         img, mask = self._db[example_name]
         # Move the img channel to the last dimension
         img = np.moveaxis(img, 0, -1)
+        # Convert the mask to a float
+        mask = mask.astype(np.float32)
         if self.transforms:
             # move the img channel to the last dimension
             transform_obj = self.transforms_pipeline(
