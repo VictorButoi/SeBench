@@ -52,8 +52,6 @@ def thunderify_SIIM_ACR(
                 if file.endswith(".dcm"):
                     image_paths.append(f"{root}/{file}")
                     break
-        if len(image_paths) > 50:
-            break
 
     # If dst_dir does not exist, create it.
     if not os.path.exists(dst_dir): 
@@ -109,17 +107,42 @@ def thunderify_SIIM_ACR(
             img = dicom_data.pixel_array  # numpy array
             # Decode mask (handle multiple RLEs for this image)
             rle_list = rle_dict.get(img_id) # Always should exist.
-            mask = np.zeros((img.shape[0], img.shape[1]), dtype=np.uint8)  # assuming image is HxW
-            for rle in rle_list:
-                mask_piece = run_length_decode(rle, img.shape[0], img.shape[1])
-                mask = np.logical_or(mask, mask_piece).astype(np.uint8)
+            if rle_list is not None and len(rle_list) > 1:
+                mask = np.zeros((img.shape[0], img.shape[1]), dtype=np.uint8)  # assuming image is HxW
+                for rle in rle_list:
+                    mask_piece = run_length_decode(rle, img.shape[0], img.shape[1])
+                    mask = np.logical_or(mask, mask_piece).astype(np.uint8)
+                
+                # Print the image and mask resolution
+                # Resize the image and mask to be (512, 512)
+                img = Image.fromarray(img)
+                mask = Image.fromarray(mask)
+                # Resize the image and mask to be (512, 512)
+                img = img.resize((512, 512))
+                mask = mask.resize((512, 512))
+                # Convert back to numpy array
+                img = np.array(img)
+                mask = np.array(mask)
+                # 0/1 Normalize the image
+                if cfg.get("visualize", False):
+                    img = (img - img.min()) / (img.max() - img.min())
+                    mask = mask.astype(np.uint8)
+                    # Visualize the image and mask
+                    f, ax = plt.subplots(1, 2, figsize=(10, 5))
+                    im = ax[0].imshow(img, cmap='gray')
+                    f.colorbar(im, ax=ax[0])
+                    ax[0].set_title("Image")
+                    se = ax[1].imshow(mask, cmap='gray')
+                    f.colorbar(se, ax=ax[1])
+                    ax[1].set_title("Mask")
+                    plt.show()
 
-            # Save the datapoint to the database
-            db[img_id] = {
-                "img": img, 
-                "seg": mask,
-            } 
-            subjects.append(img_id)   
+                # Save the datapoint to the database
+                db[img_id] = {
+                    "img": img, 
+                    "seg": mask,
+                } 
+                subjects.append(img_id)   
         # If 'split_files' is provided in the cfg, then we will use
         # those as the splis of the data.
         if splits is None:

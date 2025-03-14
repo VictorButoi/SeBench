@@ -1,3 +1,4 @@
+import torch
 # random imports
 from dataclasses import dataclass
 from typing import Any, List, Literal, Optional
@@ -8,24 +9,27 @@ from ionpy.datasets.path import DatapathMixin
 from ionpy.datasets.thunder import ThunderDataset
 from ionpy.augmentation import init_album_transforms
 from ionpy.util.validation import validate_arguments_init
-
+# transformers imports
+from transformers import AutoImageProcessor
 
 @validate_arguments_init
 @dataclass
 class SIIM_ACR(ThunderDataset, DatapathMixin):
 
     split: Literal["train", "cal", "val", "test"]
-    version: float = 0.1
+    version: float = 1.0
     resolution: int = 128
     preload: bool = False
     label: str = "seg"
+    mode: Literal["rgb", "grayscale"] = "grayscale"
     return_data_id: bool = False
-    return_gt_proportion: bool = False
+    data_root: Optional[str] = None
     transforms: Optional[Any] = None
+    return_gt_proportion: bool = False
     num_examples: Optional[int] = None
     iters_per_epoch: Optional[Any] = None
+    image_processor_cls: Optional[Any] = None
     label_threshold: Optional[float] = None
-    data_root: Optional[str] = None
 
     def __post_init__(self):
         init_attrs = self.__dict__.copy()
@@ -42,6 +46,10 @@ class SIIM_ACR(ThunderDataset, DatapathMixin):
         self.num_samples = len(subjects) if self.iters_per_epoch is None else self.iters_per_epoch
         # Apply any data preprocessing or augmentation
         self.transforms_pipeline = init_album_transforms(self.transforms)
+        if self.image_processor_cls is None:
+            self.image_processor = None
+        else:
+            self.image_processor = AutoImageProcessor.from_pretrained(self.image_processor_cls)
 
     def __len__(self):
         return self.num_samples
@@ -68,7 +76,12 @@ class SIIM_ACR(ThunderDataset, DatapathMixin):
                 mask=mask
             )
             img, mask = transform_obj["image"], transform_obj["mask"]
-
+        # Clip using pytorch
+        img = torch.clip(img, 0, 1)
+        # If the mode is rgb, then we need to duplicate the image 3 times.
+        if self.mode == "rgb":
+            img = torch.cat([img] * 3, axis=0)
+        
         # Cast our image and mask as floats so that they can be used
         # in GPU augmentation.
         img = img.float()
@@ -76,6 +89,10 @@ class SIIM_ACR(ThunderDataset, DatapathMixin):
         # Assert that these are both 3D tensors.
         assert img.dim() == 3 and mask.dim() == 3, f"Incorrect img/masks shapes, got that img: {img.shape}, mask: {mask.shape}."
 
+        # If we've defined an image processor, then we need to preprocess the image.
+        if self.image_processor is not None:
+            inputs = self.image_processor(images=img, return_tensors="pt")
+            img = inputs["pixel_values"].squeeze(0)
         
         # Prepare return dictionary
         return_dict = {"img": img}
