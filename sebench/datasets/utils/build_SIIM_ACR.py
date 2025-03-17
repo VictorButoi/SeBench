@@ -37,10 +37,11 @@ def thunderify_SIIM_ACR(
 
     # Replace -1 encodings (no mask) with NaN for easier handling (optional)
     rle_df['EncodedPixels'].replace(' -1', pd.NA, inplace=True)
+    # Drop the rows with missing EncodedPixels (no mask)
+    rle_df.dropna(subset=['EncodedPixels'], inplace=True)
 
     # Group RLEs by ImageId (in case an image has multiple mask segments)
     rle_dict = rle_df.groupby('ImageId')['EncodedPixels'].apply(list).to_dict()
-
     # List all image file paths (assuming files named as ImageId with .dcm or .png extension)
     image_paths = []
     # We want to do this by gathering all of the dcm files in the image directory.
@@ -57,42 +58,6 @@ def thunderify_SIIM_ACR(
     if not os.path.exists(dst_dir): 
         os.makedirs(dst_dir, exist_ok=True)
 
-    # If we define a splits_dir, it's because we want to use the predefined splits.
-    # For Food101, they specially curated the test split.
-    if "splits_dir" in config:
-        # Load the splits json file (train and test)
-        splits = {}
-        for split_key in ["train", "test"]:
-            json_file = f"{config['splits_dir']}/{split_key}.json"
-            with open(json_file, "r") as f:
-                splits[split_key] = json.load(f)
-        # Each subkey of split[train] is a category, and has 750 examples.
-        # We want to take a fixed amount from each category and put it in the
-        # val split.
-        new_splits_by_cat = {
-            "train": {},
-            "val": {},
-            "test": splits["test"]
-        }
-        # Split the train examples into a new train and val split, making sure to 
-        # keep the splits per class to balanced.
-        for category in splits["train"]:
-            num_train_examples = len(splits["train"][category])
-            normalized_train_prop = splits_ratio[0] / (splits_ratio[0] + splits_ratio[1])
-            new_train_examples = int(num_train_examples * normalized_train_prop)
-            # Place the split into our new splits dict.
-            new_splits_by_cat["train"][category] = splits["train"][category][:new_train_examples]
-            new_splits_by_cat["val"][category] = splits["train"][category][new_train_examples:]
-        # We now want to flatten the new_splits_by_cat so that it looks like
-        # our original splits.
-        splits = {}
-        for split_key in ["train", "val", "test"]:
-            splits[split_key] = []
-            for category in new_splits_by_cat[split_key]:
-                splits[split_key].extend(new_splits_by_cat[split_key][category])
-    else:
-        splits = None
-    
     # Iterate through each datacenter, axis  and build it as a task
     with ThunderDB.open(str(dst_dir), "c") as db:
         # Key track of the ids
@@ -101,18 +66,16 @@ def thunderify_SIIM_ACR(
         for im_path in tqdm(image_paths, total=len(image_paths)):
             # Define the image_key
             img_id = ".".join(im_path.split('/')[-1].split('.')[:-1]) # Remove suffix file ending.
-
             # Paths to the image and segmentation
             dicom_data = pydicom.dcmread(im_path)
             img = dicom_data.pixel_array  # numpy array
             # Decode mask (handle multiple RLEs for this image)
             rle_list = rle_dict.get(img_id) # Always should exist.
-            if rle_list is not None and len(rle_list) > 1:
+            if rle_list is not None:
                 mask = np.zeros((img.shape[0], img.shape[1]), dtype=np.uint8)  # assuming image is HxW
                 for rle in rle_list:
                     mask_piece = run_length_decode(rle, img.shape[0], img.shape[1])
                     mask = np.logical_or(mask, mask_piece).astype(np.uint8)
-                
                 # Print the image and mask resolution
                 # Resize the image and mask to be (512, 512)
                 img = Image.fromarray(img)
@@ -136,7 +99,6 @@ def thunderify_SIIM_ACR(
                     f.colorbar(se, ax=ax[1])
                     ax[1].set_title("Mask")
                     plt.show()
-
                 # Save the datapoint to the database
                 db[img_id] = {
                     "img": img, 
@@ -145,12 +107,11 @@ def thunderify_SIIM_ACR(
                 subjects.append(img_id)   
         # If 'split_files' is provided in the cfg, then we will use
         # those as the splis of the data.
-        if splits is None:
-            subjects = sorted(subjects)
-            splits = data_splits(subjects, splits_ratio, splits_seed)
-            splits = dict(zip(("train", "val", "test"), splits))
-            for split_key in splits:
-                print(f"{split_key}: {len(splits[split_key])} samples")
+        subjects = sorted(subjects)
+        splits = data_splits(subjects, splits_ratio, splits_seed)
+        splits = dict(zip(("train", "val", "test"), splits))
+        for split_key in splits:
+            print(f"{split_key}: {len(splits[split_key])} samples")
         # Save the metadata
         db["_subjects"] = subjects
         db["_samples"] = subjects

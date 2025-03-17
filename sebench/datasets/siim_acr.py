@@ -49,7 +49,11 @@ class SIIM_ACR(ThunderDataset, DatapathMixin):
         if self.image_processor_cls is None:
             self.image_processor = None
         else:
-            self.image_processor = AutoImageProcessor.from_pretrained(self.image_processor_cls)
+            self.image_processor = AutoImageProcessor.from_pretrained(
+                self.image_processor_cls, 
+                do_rescale=False,
+                use_fast=True
+            )
 
     def __len__(self):
         return self.num_samples
