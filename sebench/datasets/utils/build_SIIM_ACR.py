@@ -86,6 +86,8 @@ def thunderify_SIIM_ACR(
                 # Convert back to numpy array
                 img = np.array(img)
                 mask = np.array(mask)
+                # Normalize the image to be [0, 1]
+                img = (img - img.min()) / (img.max() - img.min())
                 # 0/1 Normalize the image
                 if cfg.get("visualize", False):
                     img = (img - img.min()) / (img.max() - img.min())
