@@ -24,7 +24,7 @@ def thunderify_SIIM_ACR(
     # Append version to our paths
     version = str(config["version"])
     splits_seed = 42
-    splits_ratio = (0.6, 0.15, 0.25)
+    splits_ratio = (0.7, 0.15, 0.15)
 
     # Append version to our paths
     proc_root = pathlib.Path(config["proc_root"])
@@ -45,7 +45,7 @@ def thunderify_SIIM_ACR(
     # List all image file paths (assuming files named as ImageId with .dcm or .png extension)
     image_paths = []
     # We want to do this by gathering all of the dcm files in the image directory.
-    train_images_dir = str(proc_root / 'dicom-images-train')
+    train_images_dir = str(proc_root / 'dicom-images')
     for img_dir in tqdm(os.listdir(train_images_dir), desc="Finding dicom files."):
         # Somewhere under this img_dir, there is a dcm file. Find it.
         for root, _, files in os.walk(f"{train_images_dir}/{img_dir}"):
@@ -101,6 +101,9 @@ def thunderify_SIIM_ACR(
                     f.colorbar(se, ax=ax[1])
                     ax[1].set_title("Mask")
                     plt.show()
+                # Convert these to float32 numpy
+                img = img.astype(np.float32)
+                mask = mask.astype(np.float32)
                 # Save the datapoint to the database
                 db[img_id] = {
                     "img": img, 

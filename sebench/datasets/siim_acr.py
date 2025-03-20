@@ -24,7 +24,7 @@ class SIIM_ACR(ThunderDataset, DatapathMixin):
     resolution: Optional[int] = None 
     transforms: Optional[Any] = None
     return_gt_proportion: bool = False
-    num_examples: Optional[int] = None
+    num_examples: Optional[Any] = None
     iters_per_epoch: Optional[Any] = None
     image_processor_cls: Optional[Any] = None
 
@@ -58,11 +58,9 @@ class SIIM_ACR(ThunderDataset, DatapathMixin):
     def __getitem__(self, key):
         key = key % len(self.samples)
         subj_name = self.subjects[key]
-
         # Get the image and mask
         example_obj = super().__getitem__(key)
         img, mask = example_obj["img"], example_obj["seg"]
-
         # Get the class name
         if self.transforms:
             transform_obj = self.transforms_pipeline(
@@ -79,7 +77,6 @@ class SIIM_ACR(ThunderDataset, DatapathMixin):
             img = torch.cat([img] * 3, axis=0)
         # Cast our image and mask as floats so that they can be used
         # in GPU augmentation.
-        img = img.float()
         mask = mask[None].float() # Add channel dimension.
         # Assert that these are both 3D tensors.
         assert img.dim() == 3 and mask.dim() == 3,\
