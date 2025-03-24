@@ -93,13 +93,19 @@ def thunderify_SIIM_ACR(
                     img = (img - img.min()) / (img.max() - img.min())
                     mask = mask.astype(np.uint8)
                     # Visualize the image and mask
-                    f, ax = plt.subplots(1, 2, figsize=(10, 5))
+                    f, ax = plt.subplots(1, 3, figsize=(10, 5))
                     im = ax[0].imshow(img, cmap='gray')
                     f.colorbar(im, ax=ax[0])
                     ax[0].set_title("Image")
                     se = ax[1].imshow(mask, cmap='gray')
                     f.colorbar(se, ax=ax[1])
                     ax[1].set_title("Mask")
+                    # Finally, plot the overlay
+                    overlay = np.zeros((512, 512, 3))
+                    overlay[:, :, 0] = img
+                    overlay[:, :, 1] = mask
+                    ax[2].imshow(overlay)
+                    ax[2].set_title("Overlay")
                     plt.show()
                 # Convert these to float32 numpy
                 img = img.astype(np.float32)
