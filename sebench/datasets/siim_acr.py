@@ -14,7 +14,7 @@ from transformers import AutoImageProcessor
 @dataclass
 class SIIM_ACR(ThunderDataset, DatapathMixin):
 
-    split: Literal["train", "cal", "val", "test"]
+    split: Literal["train", "val", "test"]
     version: float
     preload: bool = False
     label: str = "seg"
