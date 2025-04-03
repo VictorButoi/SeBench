@@ -19,6 +19,9 @@ class STARE(ThunderDataset, DatapathMixin):
     version: float = 0.2
     preload: bool = False
     return_data_id: bool = False
+    data_root: Optional[str] = None
+    label: str = "seg"
+    mode: Literal["rgb", "grayscale"] = "grayscale"
     return_gt_proportion: bool = False
     transforms: Optional[Any] = None
     num_examples: Optional[int] = None
@@ -60,25 +63,33 @@ class STARE(ThunderDataset, DatapathMixin):
 
         # Get the class name
         if self.transforms:
-            transform_obj = self.transforms(img=img, mask=mask)
-            img = transform_obj["img"]
-            mask = transform_obj["mask"]
+            transform_obj = self.transforms_pipeline(
+                image=img,
+                mask=mask
+            )
+            img, mask = transform_obj["image"], transform_obj["mask"]
+        else:
+            # We need to convert these image and masks to tensors at least.
+            img = torch.tensor(img)
+            mask = torch.tensor(mask)
+
+        # If the image is RGB, we need to normalize it to be between 0 and 1
+        if self.mode == "rgb":
+            img = img / 255.0
 
         # Add channel dimension to the mask
         mask = np.expand_dims(mask, axis=0)
         
-        # Prepare the return dictionary.
-        return_dict = {
-            "img": torch.from_numpy(img).float(),
-            "label": torch.from_numpy(mask).float(),
-        }
-
-        # Print the shapes
-        if self.return_gt_proportion:
-            return_dict["gt_proportion"] = example_obj["gt_proportion"][self.annotator]
+        # Prepare return dictionary
+        return_dict = {"img": img}
+        # or the image itself (for reconstruction).
+        if self.label == "seg":
+            return_dict["label"] = mask 
+        else:
+            raise ValueError(f"Invalid label type: {self.label}")
+        # Add the data_id if necessary
         if self.return_data_id:
             return_dict["data_id"] = subj_name 
-
         return return_dict
 
     @property
