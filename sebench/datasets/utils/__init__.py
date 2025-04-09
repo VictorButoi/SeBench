@@ -3,6 +3,7 @@ from .build_cityscapes import thunderify_CityScapes
 from .build_RIWA import thunderify_RIWA 
 from .build_octa import thunderify_OCTA
 from .build_SIIM_ACR import thunderify_SIIM_ACR
+from .build_lidc import thunderify_LIDC
 from .build_isles import thunderify_ISLES
 from .build_lits import thunderify_LiTS
 from .build_drive import thunderify_DRIVE 
