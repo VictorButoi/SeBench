@@ -61,7 +61,8 @@ class SIIM_ACR(ThunderDataset, DatapathMixin):
         # Get the image and mask
         example_obj = super().__getitem__(key)
         img, mask = example_obj["img"], example_obj["seg"]
-        # Get the class name
+
+        # Apply the transforms, or a default conversion to tensor.
         if self.transforms:
             transform_obj = self.transforms_pipeline(
                 image=img,
@@ -75,6 +76,7 @@ class SIIM_ACR(ThunderDataset, DatapathMixin):
         # If the mode is rgb, then we need to duplicate the image 3 times.
         if self.mode == "rgb":
             img = torch.cat([img] * 3, axis=0)
+            
         # Cast our image and mask as floats so that they can be used
         # in GPU augmentation.
         mask = mask[None].float() # Add channel dimension.
